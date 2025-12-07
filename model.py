@@ -3,14 +3,23 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class model(nn.Module):
-    def __init__(self):
+    def __init__(self, num_classes=10, input_size=(3,128,128)):
         super(model, self).__init__()
-        self.conv1 = nn.Conv2d(1, 6, 5)
-        self.pool = nn.MaxPool2d(2, 2)
+        self.conv1 = nn.Conv2d(3, 6, 5)
         self.conv2 = nn.Conv2d(6, 16, 5)
-        self.fc1 = nn.Linear(16 * 4 * 4, 120)
+        self.pool = nn.MaxPool2d(2, 2)
+
+        # calcul automatique de la taille après conv+pool
+        c, h, w = input_size
+        h = (h - 4) // 2   # conv1 puis pool
+        w = (w - 4) // 2
+        h = (h - 4) // 2   # conv2 puis pool
+        w = (w - 4) // 2
+        self.flatten_size = 16 * h * w
+
+        self.fc1 = nn.Linear(self.flatten_size, 120)
         self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 10)
+        self.fc3 = nn.Linear(84, num_classes)
 
     def forward(self, x):
         x = F.relu(self.conv1(x))
