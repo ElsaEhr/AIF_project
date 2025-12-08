@@ -53,7 +53,7 @@ def test(model, dataloader):
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--exp_name', type=str, default = 'MNIST', help='experiment name')
+    parser.add_argument('--exp_name', type=str, default = 'prediction genre', help='experiment name')
     parser.add_argument('--batch_size', type=int, default = int(64), help='batch_size')
     parser.add_argument('--lr', type=float, default = float(1e-3), help='learning rate')
     parser.add_argument('--nb_epochs', type=int, default = int(10), help='number of epochs')
@@ -74,7 +74,7 @@ if __name__=='__main__':
     ])
 
     # --- chemin vers ton dataset local ---
-    dataset_path = './content/sorted_movie_posters_paligema/'  # chemin vers le dossier contenant les classes
+    dataset_path = './content/'  # chemin vers le dossier contenant les classes
     full_dataset = ImageFolder(root=dataset_path, transform=transform)
 
     # --- optionnel : split train/test ---
