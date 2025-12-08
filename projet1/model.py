@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 class poster_classifier(nn.Module):
     def __init__(self, num_classes=10, input_size=(3,128,128)):
-        super(model, self).__init__()
+        super(poster_classifier, self).__init__()
         self.conv1 = nn.Conv2d(3, 6, 5)
         self.conv2 = nn.Conv2d(6, 16, 5)
         self.pool = nn.MaxPool2d(2, 2)

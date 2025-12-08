@@ -50,7 +50,7 @@ def batch_predict():
     for img_binary in images_binary:
         img_pil = Image.open(img_binary.stream)
         tensor = transform(img_pil)
-        tensors.append(tensor)
+        tensors.append(tensor.to(device))
 
     # Stack tensors to form a batch tensor
     batch_tensor = torch.stack(tensors, dim=0)
