@@ -1,0 +1,8 @@
+version: '3.8' # specify docker-compose version
+services: # services to run
+  api: # name of the first service
+    build: 
+      context: . # specify the directory of the Dockerfile
+      dockerfile: Dockerfile-api # specify the Dockerfile name
+    ports:
+      - "5075:5075" # specify port mapping
