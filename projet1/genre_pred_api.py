@@ -15,7 +15,7 @@ app = Flask(__name__)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--model_path", type=str, default="weights/poster_classifier.pth", help="model path")
-parser.add_argument("--labels_path", type=str, default="weights/labels.json", help="labels json path")
+parser.add_argument("--labels_path", type=str, default="content/labels.json", help="labels json path")
 args = parser.parse_args()
 
 # ---- Load labels (id -> genre) ----

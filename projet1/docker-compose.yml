@@ -6,3 +6,6 @@ services: # services to run
       dockerfile: Dockerfile-api # specify the Dockerfile name
     ports:
       - "5075:5075" # specify port mapping
+    volumes:
+      - ./weights:/app/weights:ro
+      - ./content:/app/content:ro
