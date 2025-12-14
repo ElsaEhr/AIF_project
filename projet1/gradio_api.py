@@ -3,7 +3,9 @@ from PIL import Image
 import requests
 import io
 
-API_URL = "http://127.0.0.1:5075/predict"  # Flask en local
+#API_URL = "http://127.0.0.1:5075/predict"  # Flask en local
+API_URL = "http://api:5075/predict" # Docker compose
+
 
 def recognize_genre(image: Image.Image):
     # image est un PIL.Image car on met type="pil" dans Gradio
@@ -28,5 +30,5 @@ if __name__ == "__main__":
         description="Upload a movie poster and the API will predict its genre.",
     )
 
-    print("Starting Gradio app... Open: http://127.0.0.1:7860")
-    interface.launch(server_name="127.0.0.1", server_port=7860, inbrowser=False)
+    #print("Starting Gradio app... Open: http://127.0.0.1:7860")
+    interface.launch(server_name="0.0.0.0", server_port=7860, inbrowser=False)
