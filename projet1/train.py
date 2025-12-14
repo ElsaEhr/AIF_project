@@ -73,9 +73,13 @@ if __name__=='__main__':
         transforms.Normalize((0.5,0.5,0.5),(0.5,0.5,0.5))
     ])
 
-    # --- chemin vers ton dataset local ---
+    # --- chemin vers dataset local ---
     dataset_path = './content/'  # chemin vers le dossier contenant les classes
     full_dataset = ImageFolder(root=dataset_path, transform=transform)
+
+    print(full_dataset.classes)
+    print(full_dataset.class_to_idx)
+
 
     # --- optionnel : split train/test ---
     from torch.utils.data import random_split
@@ -103,5 +107,5 @@ if __name__=='__main__':
         os.makedirs('./weights')
 
     # sauvegarder les poids
-    torch.save(net.state_dict(), './weights/poster_classifier.pth')
-    print("Poids sauvegardés !")
+    #torch.save(net.state_dict(), './weights/poster_classifier.pth')
+    #print("Poids sauvegardés !")
