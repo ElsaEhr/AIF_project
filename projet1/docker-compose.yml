@@ -1,4 +1,4 @@
-version: '3.8' # specify docker-compose version
+#version: '3.8' # specify docker-compose version
 services: # services to run
   api: # name of the first service
     build:
