@@ -166,6 +166,7 @@ if __name__=='__main__':
     print(set(train_idx) & set(val_idx))
     print(set(val_idx) & set(test_idx))
     """
+    trainset_not_aug = torch.utils.data.Subset(dataset_full, train_idx)
     trainset = torch.utils.data.Subset(augmented_dataset_full, train_idx)
     valset = torch.utils.data.Subset(dataset_full, val_idx)
     testset = torch.utils.data.Subset(dataset_full, test_idx)
@@ -304,11 +305,11 @@ if __name__=='__main__':
 
 
     #FEATURE BASED SCORES----------------------------------------------------------------------------------
-    target_tpr = 0.9
+    target_tpr = 0.8
     metrics_dict = {}
 
 
-    fit_features = compute_features(trainset, net, device)
+    fit_features = compute_features(trainset_not_aug, net, device)
     test_features_negatives = compute_features(testset, net, device)
     test_features_positives = compute_features(anomalies_test, net, device)
     fit_features = fit_features / fit_features.norm(dim=1, keepdim=True)
@@ -332,6 +333,8 @@ if __name__=='__main__':
     metrics_dict['DKNN']['auroc'] = auroc
 
     threshold = compute_threshold(scores_positives, target_tpr)
+
+    print("threshold for DKNN", threshold)
 
     metrics_dict['DKNN']['accuray'] = accuracy(scores_negatives, scores_positives, threshold)
     metrics_dict['DKNN']['tpr'], metrics_dict['DKNN']['fpr'] = tpr_fpr(scores_negatives, scores_positives, threshold)
