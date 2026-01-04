@@ -51,7 +51,7 @@ if __name__ == "__main__":
         genre_output = gr.Label(label="Predicted genre")
         validation_output = gr.Textbox(label="Poster validation")
 
-        btn_genre.click(predict_genre, image_input, genre_output)
+        btn_genre.click(recognize_genre, image_input, genre_output)
         btn_validate.click(validate_poster, image_input, validation_output)
 
     demo.launch(server_name="0.0.0.0", server_port=7860)
