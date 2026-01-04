@@ -7,22 +7,23 @@ import torch.nn.functional as F
 import torchvision.transforms as transforms
 from flask import Flask, jsonify, request
 from PIL import Image
-
 from test_functions import DKNN
 from model_resNet import poster_classifier
-
 import pickle
+import os
 
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DKNN_PATH = os.path.join(BASE_DIR, "dknn.pkl")
 
 try:
-    with open("part2/dknn.pkl", "rb") as f: 
-        data = pickle.load(f) 
-    print("Chargement dknn")    
+    with open(DKNN_PATH, "rb") as f:
+        data = pickle.load(f)
+    print("Chargement dknn")
     dknn = data["dknn"]
     threshold = data["threshold"]
 except FileNotFoundError:
-    print("ERREUR : Le fichier dknn.pkl est introuvable.")
+    print(f"ERREUR : Fichier introuvable : {DKNN_PATH}")
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
