@@ -1,0 +1,17 @@
+FROM python:3.10-slim
+
+WORKDIR /app
+
+# (optionnel mais souvent utile)
+RUN pip install --no-cache-dir --upgrade pip
+
+# 1) copier d'abord les requirements pour profiter du cache
+COPY requirements-api.txt /app/requirements-api.txt
+RUN pip install --no-cache-dir -r requirements-api.txt
+
+# 2) copier le reste
+COPY . /app
+
+EXPOSE 5075
+
+CMD ["python", "genre_pred_api.py", "--model_path", "weights/poster_classifier.pth", "--labels_path", "content/labels.json"]
