@@ -1,6 +1,14 @@
 FROM python:3.10-slim
 
+# Telechargement automatique des poids du modele depuis le drive
 WORKDIR /app
+
+RUN pip install --no-cache-dir gdown
+
+RUN mkdir -p weights
+
+RUN python -m gdown --id 1wVOPxCZLpmmmqpcQoHbGcqQd9YKgCCPE -O weights/poster_classifier.pth
+
 
 # (optionnel mais souvent utile)
 RUN pip install --no-cache-dir --upgrade pip
@@ -14,4 +22,4 @@ COPY . /app
 
 EXPOSE 5075
 
-CMD ["python", "genre_pred_api.py", "--model_path", "weights/poster_classifier.pth", "--labels_path", "content/labels.json"]
+CMD ["python", "genre_pred_api.py", "--model_path", "weights/poster_classifier.pth", "--labels_path", "labels.json"]

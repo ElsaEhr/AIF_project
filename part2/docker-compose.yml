@@ -7,8 +7,10 @@ services: # services to run
     ports:
       - "5075:5075" # specify port mapping
     volumes:
-      - ./weights:/app/weights:ro
-      - ./content:/app/content:ro
+      - .:/app
+      - /app/weights
+      #- ./weights:/app/weights:ro
+      #- ./content:/app/content:ro
 
   gradio:
     build:
