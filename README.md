@@ -4,7 +4,7 @@
 Zoe Lelong (lelong@insa-toulouse.fr)  
 Jade Roumazeille-Peter (roumazeille@insa-toulouse.fr)  
 Eduardo De Jesus Zancanaro Garcia (zancanaro@insa-toulouse.fr)  
-Elsa Ehrhart (ehrhart@insa-toulouse.fr)
+Elsa Ehrhart (ehrhart@insa-toulouse.fr)  
 Aria Chauchat (chaucha@insa-toulouse.fr)
 
 ## Overview
