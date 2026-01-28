@@ -1,6 +1,7 @@
 import os
 import clip
 from PIL import Image
+from pathlib import Path
 from annoy import AnnoyIndex
 
 model, preprocess = clip.load("ViT-B/32", device=device)
