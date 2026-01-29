@@ -66,14 +66,16 @@ for path in image_paths:
     images.append(img)
 
 images = torch.stack(images).to(device)
-print(images.shape)
+
 
 # We create embeddings for the images
-
+print("Creating embeddings")
 with torch.no_grad():
-
+    print("encoding the images")
     image_embeddings = model.encode_image(images)
+    print("enconding done")
     image_embeddings = image_embeddings / image_embeddings.norm(dim=1, keepdim=True)
 
+print("almpst there")
 image_embeddings = image_embeddings.cpu().numpy()
 print(type(image_embeddings),image_embeddings.shape)
