@@ -17,7 +17,6 @@ from pathlib import Path
 # For the embedding module
 from sentence_transformers import SentenceTransformer
 
-
 # Load device
 
 if torch.backends.mps.is_available():
@@ -47,7 +46,7 @@ model, preprocess = clip.load("ViT-B/32", device=device)
 
 # We are going to load and collect the images which are all in subfolders of a root folder 'root_dir' (choose the path where the images of the project are located)
 
-root_dir = Path.cwd()/"/Users/zoe/Desktop/5A/AIF/content"
+root_dir = "../MovieGenre/content"
 print(root_dir)
 
 image_paths = []
@@ -72,6 +71,7 @@ print(images.shape)
 # We create embeddings for the images
 
 with torch.no_grad():
+
     image_embeddings = model.encode_image(images)
     image_embeddings = image_embeddings / image_embeddings.norm(dim=1, keepdim=True)
 
