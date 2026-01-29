@@ -260,3 +260,52 @@ class Retriever():
     def reset_Retriever_index(self):
 
         self.index = []
+
+
+class RAG():
+
+    def __init__(self, CONFIG):
+        self.foundation_model = FoundationModel(FOUND_MODEL_PATH=CONFIG['FOUND_MODEL_PATH'])
+        self.Embedding_model = EmbeddingModel(EMBEDD_MODEL_PATH=CONFIG['EMBEDD_MODEL_PATH'])
+        self.splitter = Splitter(self.Embedding_model)
+        self.retriever = Retriever(self.Embedding_model)
+
+        self.dim_embed = CONFIG['DIM_EMBED']
+        self.chunk_size = CONFIG['CHUNK_SIZE']
+        self.overlap = CONFIG['OVERLAP']
+
+    def reset_index(self):
+        self.retriever.reset_Retriever_index()
+        self.splitter.reset_splitter()
+
+    def load_documents_and_get_chunks(self, path, sentence_split=False):
+        self.splitter.get_chunks(path_doc=path,
+                                 chunk_size=self.chunk_size,
+                                 overlap=self.overlap,
+                                 sentence_split=sentence_split)
+
+        chunks = self.splitter.chunks
+
+        self.retriever.add_elements_to_index(chunks=chunks)
+
+    def get_retrieval(self, query, number_of_hits, adapt=False):
+        retrieved_info = self.retriever.search_best(query=query, number_of_hits=number_of_hits, adapt=adapt)
+
+        # It is the full information of the form (Id, chunk, sim)
+
+        retrieved = []
+
+        for elem in retrieved_info:
+            i, chunk, distance = elem
+
+            retrieved.append(chunk.content)
+
+        # We get rid of repeated items
+        return list(dict.fromkeys(retrieved))
+
+    def generate_response_rag(self, query):
+        retrieved = self.get_retrieval(query=query,
+                                       number_of_hits=3)
+
+        return self.foundation_model.generate_response_with_context(prompt=query,
+                                                                    context=retrieved)
