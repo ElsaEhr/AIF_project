@@ -33,6 +33,6 @@ def embed_images(directory_images,model, preprocess,device):
         image_embeddings = model.encode_image(images)
 
         image_embeddings = image_embeddings / image_embeddings.norm(dim=1, keepdim=True)
-        print("Images have been emebedded, and their embeddings have been normalized")
+    print("Images have been emebedded, and their embeddings have been normalized")
 
     return image_embeddings, image_paths
