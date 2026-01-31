@@ -31,11 +31,11 @@ class TextClassifier(nn.Module):
     super().__init__()
     self.embedding = nn.Embedding(vocab_size, embedding_dim, padding_idx=tokenizer.pad_token_id)
     self.lstm = nn.LSTM(embedding_dim,
-                        100,
+                        300,
                         num_layers=2,
                         dropout=0.2,
                         batch_first=True)
-    self.fc = nn.Linear(100, num_classes)
+    self.fc = nn.Linear(300, num_classes)
 
   def forward(self, text, text_lengths):
       embedded = self.get_embeddings(text, text_lengths)
@@ -114,10 +114,10 @@ class MovieDataset(Dataset):
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--exp_name', type=str, default = 'prediction genre', help='experiment name')
+    parser.add_argument('--exp_name', type=str, default = 'prediction genre from plot', help='experiment name')
     parser.add_argument('--batch_size', type=int, default = int(64), help='batch_size')
     parser.add_argument('--lr', type=float, default = float(1e-3), help='learning rate')
-    parser.add_argument('--nb_epochs', type=int, default = int(50), help='number of epochs')
+    parser.add_argument('--nb_epochs', type=int, default = int(30), help='number of epochs')
 
 
     args = parser.parse_args()
