@@ -1,3 +1,17 @@
+#This file defines the functions
+#extract_response
+#short_response
+#
+#and the following classes
+
+#FoundationModel
+#EmbeddingModel
+#Chunk
+#Splitter
+#Retriever
+#RAG
+
+
 class FoundationModel():
 
     def __init__(self, FOUND_MODEL_PATH, TEMPERATURE=None, MAX_NEW_TOKENS=10000):
