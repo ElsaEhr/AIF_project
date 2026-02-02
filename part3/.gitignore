@@ -1,0 +1,38 @@
+# ===== System =====
+.DS_Store
+
+# ===== Python =====
+__pycache__/
+*.pyc
+*.pyo
+
+# ===== Virtual env =====
+venv/
+.env/
+
+# ===== Models / Weights =====
+*.pkl
+*.pt
+*.pth
+*.h5
+*.ckpt
+
+# ===== Embeddings / Index =====
+embeddings/
+*.ann
+*.faiss
+
+# ===== Content =====
+content/
+weights/
+
+# ===== Logs / Outputs =====
+runs/
+logs/
+outputs/
+results/
+
+# ===== Docker local =====
+.env
+
+

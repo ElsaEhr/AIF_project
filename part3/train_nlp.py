@@ -168,6 +168,12 @@ if __name__=='__main__':
     dataset_path = './data/movie_plots.csv'  # chemin vers le dossier contenant les classes
     full_dataset = MovieDataset(dataset_path, tokenizer)
 
+    #--- sauvegarder les labels --- 
+    #Comme ça on les réutilisera pour l’API de prédiction et on évite les erreurs de mapping : plot_labels[pred_id]
+    classes = list(pd.Categorical(full_dataset.data["label"]).categories)
+    os.makedirs("./weights", exist_ok=True)
+    with open("./weights/plot_labels.json", "w") as f:
+    json.dump(classes, f)
 
 
     # --- optionnel : split train/test ---
