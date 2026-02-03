@@ -16,7 +16,7 @@ import pandas as pd
 from annoy import AnnoyIndex
 from transformers import DistilBertTokenizerFast
 
-
+from nlp_model import TextClassifier
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -25,7 +25,7 @@ DKNN_PATH = os.path.join(BASE_DIR, "dknn.pkl")
 
 #Plot classification related paths
 PLOT_MODEL_PATH = os.path.join(BASE_DIR, "weights/text_classifier.pth")
-PLOT_LABELS_PATH = os.path.join(BASE_DIR, "weights/plot_labels.json")
+PLOT_LABELS_PATH = os.path.join(BASE_DIR, "labels.json")
 
 #ANNOY related paths
 ANNOY_PATH = os.path.join(BASE_DIR, "embeddings/movie_plots.ann")
@@ -49,8 +49,8 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 app = Flask(__name__)
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--model_path", type=str, default="weights_resNet/poster_classifier.pth", help="model path")
-parser.add_argument("--labels_path", type=str, default="content/labels.json", help="labels json path")
+parser.add_argument("--model_path", type=str, default="weights_resNet/poster_classifier_resnet.pth", help="model path")
+parser.add_argument("--labels_path", type=str, default="./labels.json", help="labels json path")
 args = parser.parse_args()
 
 # ---- Load labels (id -> genre) ----
@@ -220,8 +220,7 @@ def batch_validate_poster():
 
     return jsonify({"is a poster": poster_val})
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5075, debug=True)
+
 
 # Plot genre prediction route // prédiction de genre à partir du synopsis
 @app.route("/predict_plot", methods=["POST"])
@@ -263,3 +262,6 @@ def recommend_from_plot():
             "distance": float(dist)
         })
     return jsonify({"recommendations": recs})
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5075, debug=True)
