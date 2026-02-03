@@ -1,6 +1,8 @@
 import os
 import torch
 from PIL import Image
+import clip
+import pandas as pd
 
 def embed_images(directory_images,model, preprocess,device):
     """
@@ -31,8 +33,40 @@ def embed_images(directory_images,model, preprocess,device):
     print("Creating embeddings")
     with torch.no_grad():
         image_embeddings = model.encode_image(images)
-
         image_embeddings = image_embeddings / image_embeddings.norm(dim=1, keepdim=True)
     print("Images have been emebedded, and their embeddings have been normalized")
 
     return image_embeddings, image_paths
+
+
+def embed_poster(image_path, model, preprocess, device):
+    image = preprocess(Image.open(image_path).convert("RGB"))
+    image = image.unsqueeze(0).to(device)
+
+    with torch.no_grad():
+        emb = model.encode_image(image)
+        emb = emb / emb.norm(dim=1, keepdim=True)
+
+    return emb.cpu().numpy()[0]
+
+
+def embed_plot(plot, model, preprocess, device):
+    tokens = clip.tokenize([plot]).to(device)
+    with torch.no_grad():
+        emb = model.encode_text(tokens)
+        emb = emb / emb.norm(dim=1, keepdim=True)
+    return emb.cpu().numpy()[0]
+
+def embed_plots(plots_file, model, preprocess, device):
+    plots_dataframe = pd.read_csv(plots_file)
+    plots = plots_dataframe["movie_plot"]
+
+    embeds = []
+    for plot in plots:
+        embeds.append(embed_plot(plot, model, preprocess, device))
+    return embeds
+
+def embed_movie(plot, poster_path, model, preprocess, device):
+    plot_emb = embed_plot(plot, model, device)
+    poster_emb = embed_poster(poster_path, model, preprocess, device)
+    return (plot_emb + poster_emb) / 2

@@ -21,7 +21,7 @@ import os
 import clip
 from PIL import Image
 from pathlib import Path
-from annoy import AnnoyIndex
+from annoy_builder import AnnoyIndex
 
 # Load device
 
@@ -42,7 +42,7 @@ else:
 ###########
 #Impornts from our own files
 
-from embed_images import embed_images
+from embed import embed_images, embed_plots
 
 #load du model
 model, preprocess = clip.load("ViT-B/32", device=device)
@@ -53,5 +53,12 @@ root_dir = "../MovieGenre/content"
 image_embeddings, image_paths = embed_images(directory_images=root_dir, model=model,
                                             preprocess=preprocess, device=device)
 
-image_embeddings = image_embeddings.cpu().numpy()
+adress_plots = "../movie_plots.csv"
+text_embeddings = embed_plots(plots_file=adress_plots, model=model,
+                              preprocess=preprocess, device=device)
+
+
+
+#image_embeddings = image_embeddings.cpu().numpy()
+
 print(type(image_embeddings),image_embeddings.shape)
