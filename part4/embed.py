@@ -50,7 +50,7 @@ def embed_poster(image_path, model, preprocess, device):
     return emb.cpu().numpy()[0]
 
 
-def embed_plot(plot, model, preprocess, device):
+def embed_plot(plot, model, device):
     tokens = clip.tokenize([plot]).to(device)
     with torch.no_grad():
         emb = model.encode_text(tokens)

@@ -16,15 +16,17 @@ from pathlib import Path
 
 # For the embedding module
 from sentence_transformers import SentenceTransformer
-
 import os
 import clip
-from PIL import Image
 from pathlib import Path
-from annoy_builder import AnnoyIndex
+
+
+###########
+#Impornts from our own files
+from embed import embed_plot
+from annoy_builder import index_builder
 
 # Load device
-
 if torch.backends.mps.is_available():
     # MPS is the GPU model in Mac technology
     device = torch.device("mps")
@@ -39,26 +41,31 @@ if torch.cuda.is_available():
 else:
     device = "cpu"
 
-###########
-#Impornts from our own files
-
-from embed import embed_images, embed_plots
 
 #load du model
 model, preprocess = clip.load("ViT-B/32", device=device)
 
 # We are going to load and collect the images which are all in subfolders of a root folder 'root_dir' (choose the path where the images of the project are located)
 
-root_dir = "../MovieGenre/content"
-image_embeddings, image_paths = embed_images(directory_images=root_dir, model=model,
-                                            preprocess=preprocess, device=device)
+BASE_DIR = Path(__file__).resolve().parent
+plots_path = BASE_DIR.parent / "movie_plots.csv"
+image_folder = BASE_DIR.parent / "MovieGenre" / "content"
 
-adress_plots = "../movie_plots.csv"
-text_embeddings = embed_plots(plots_file=adress_plots, model=model,
-                              preprocess=preprocess, device=device)
+DIM=512
+annoy_index, metadata = index_builder(plots_path,image_folder,DIM,
+                  model,preprocess,device)
 
+user_input="a film with samurais and swords in Japan."
+query_emb = embed_plot(user_input, model,device)
 
+results = []
+movie_ids = annoy_index.get_nns_by_vector(query_emb, n=1)
 
-#image_embeddings = image_embeddings.cpu().numpy()
+for movie_id in movie_ids:
+    movie = metadata[movie_id]
+    results.append({
+        "poster": movie["movie_poster_path"],
+        "plot": movie["movie_plot"],
+        "category": movie["movie_category"]
+    })
 
-print(type(image_embeddings),image_embeddings.shape)
