@@ -52,15 +52,21 @@ plots_path = BASE_DIR.parent / "movie_plots.csv"
 image_folder = BASE_DIR.parent / "MovieGenre" / "content"
 
 DIM=512
+
+print("Building annoy index")
 annoy_index, metadata = index_builder(plots_path,image_folder,DIM,
                   model,preprocess,device)
+
+print("index built")
 
 user_input="a film with samurais and swords in Japan."
 query_emb = embed_plot(user_input, model,device)
 
 results = []
-movie_ids = annoy_index.get_nns_by_vector(query_emb, n=1)
 
+print("Getting closest neighbors to the Query")
+movie_ids = annoy_index.get_nns_by_vector(query_emb, n=1)
+print("Closest neighbors obtained")
 for movie_id in movie_ids:
     movie = metadata[movie_id]
     results.append({

@@ -3,6 +3,7 @@ import torch
 from PIL import Image
 import clip
 import pandas as pd
+import numpy as np
 
 def embed_images(directory_images,model, preprocess,device):
     """
@@ -66,7 +67,25 @@ def embed_plots(plots_file, model, preprocess, device):
         embeds.append(embed_plot(plot, model, preprocess, device))
     return embeds
 
+
+def chunk_text(text, max_chars=500):
+    """Splits text into chunks of max_chars each"""
+    return [text[i:i + max_chars] for i in range(0, len(text), max_chars)]
+
+
 def embed_movie(plot, poster_path, model, preprocess, device):
-    plot_emb = embed_plot(plot, model, device)
+    # chunk plot
+    plot_chunks = chunk_text(plot, max_chars=78)
+
+    # embed each chunk
+    chunk_embeddings = [embed_plot(chunk, model, device) for chunk in plot_chunks]
+
+    # average chunk embeddings
+    plot_emb = np.mean(chunk_embeddings, axis=0)
+
+    # embed poster
     poster_emb = embed_poster(poster_path, model, preprocess, device)
-    return (plot_emb + poster_emb) / 2
+
+    # combine text + image embeddings
+    movie_emb = (plot_emb + poster_emb) / 2
+    return movie_emb
