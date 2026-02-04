@@ -1,12 +1,30 @@
 FROM python:3.10-slim
 
+# Telechargement automatique des poids des modeles depuis le drive
 WORKDIR /app
+
+RUN pip install --no-cache-dir gdown
+
+RUN mkdir -p weights && \
+    gdown --id 13cufbIVuBbY3s5Q97gULYCCcpx3U1KLr -O weights/poster_classifier_resnet.pth && \
+    gdown --id 1gNdApWLh_83YNnyUcDmio2PwWAPijvxB -O weights/text_classifier.pth && \
+    gdown --id 1pDzDyHeH-nRU2a9bI6KlFs7PLxaLzCoF -O weights/dknn.pkl
+
+RUN mkdir -p embeddings && \
+    gdown --id 16OEnpILRMhIysFlwDNAUMA5-SQ1GpVbp -O embeddings/movie_plots.ann && \
+    gdown --id 1xSPjkratx8XX8NlRiP30waXrZHlYQBf_ -O embeddings/movie_plots_index.csv
 
 # (optionnel mais souvent utile)
 RUN pip install --no-cache-dir --upgrade pip
 
 # 1) copier d'abord les requirements pour profiter du cache
 COPY requirements-api.txt /app/requirements-api.txt
+
+# ajout pour pouvoir utiliser annoy
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN pip install --no-cache-dir -r requirements-api.txt
 
 # 2) copier le reste
@@ -14,4 +32,4 @@ COPY . /app
 
 EXPOSE 5075
 
-CMD ["python", "genre_pred_api.py", "--model_path", "weights/poster_classifier.pth", "--labels_path", "content/labels.json"]
+CMD ["python", "genre_pred_api.py", "--poster_classifier_path", "weights/poster_classifier_resnet.pth", "--text_classifier_path", "weights/text_classifier.pth", "--dknn_path", "weights/dknn.pkl", "--annoy_path", "embeddings/movie_plots.ann", "--annoy_meta_path", "embeddings/movie_plots_index.csv", "--labels_path", "labels.json"]
