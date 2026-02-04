@@ -58,22 +58,30 @@ def embed_plot(plot, model, device):
         emb = emb / emb.norm(dim=1, keepdim=True)
     return emb.cpu().numpy()[0]
 
-def embed_plots(plots_file, model, preprocess, device):
+
+def embed_plots(plots_file, model, device):
     plots_dataframe = pd.read_csv(plots_file)
     plots = plots_dataframe["movie_plot"]
 
     embeds = []
     for plot in plots:
-        embeds.append(embed_plot(plot, model, preprocess, device))
+        embeds.append(embed_plot(plot, model, device))
     return embeds
 
-def embed_movie(plot, poster_path, model, preprocess, device):
-    # average chunk embeddings
-    plot_emb = embed_plot(plot,model,device)
+
+def embed_movie(plot, poster_path, model, preprocess, device, alpha=0.5):
+    # embed plot
+    plot_emb = embed_plot(plot, model, device).astype(np.float32) #annoy needs float32
 
     # embed poster
-    poster_emb = embed_poster(poster_path, model, preprocess, device)
+    poster_emb = embed_poster(poster_path, model, preprocess, device).astype(np.float32)
 
-    # combine text + image embeddings
-    movie_emb = (plot_emb + poster_emb) / 2
+    # combine (weighted average)
+    movie_emb = alpha * plot_emb + (1 - alpha) * poster_emb
+
+    # (optionnel) renormaliser pour rester comparable en cosinus/angular
+    norm = np.linalg.norm(movie_emb)
+    if norm > 0:
+        movie_emb = movie_emb / norm
+
     return movie_emb

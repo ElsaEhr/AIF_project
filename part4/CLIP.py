@@ -22,19 +22,11 @@ from pathlib import Path
 
 
 ###########
-#Impornts from our own files
+#Imports from our own files
 from embed import embed_plot
 from annoy_builder import index_builder
 
-# Load device
-if torch.backends.mps.is_available():
-    # MPS is the GPU model in Mac technology
-    device = torch.device("mps")
-elif torch.cuda.is_available():
-    device = torch.device("cuda")
-else:
-    device =torch.device("cpu")
-
+###########
 #load device
 if torch.cuda.is_available():
     device = "cuda"
@@ -49,18 +41,28 @@ model, preprocess = clip.load("ViT-B/32", device=device)
 
 BASE_DIR = Path(__file__).resolve().parent
 plots_path = BASE_DIR.parent / "movie_plots.csv"
-image_folder = BASE_DIR.parent / "MovieGenre" / "content"
+image_folder = BASE_DIR.parent / "content"
 
 DIM=512
 
 print("Building annoy index")
-annoy_index, metadata = index_builder(plots_path,image_folder,DIM,
-                  model,preprocess,device)
+annoy_index, metadata, failed = index_builder(
+    plots_path, image_folder, DIM,
+    model, preprocess, device,
+    index_path="movies.ann",
+    metadata_path="metadata.json",
+    n_trees=50,
+    alpha=0.5
+)
 
-print("index built")
+print(f"Index built. Failed rows: {len(failed)}")
 
-user_input="a film with samurais and swords in Japan."
-query_emb = embed_plot(user_input, model,device)
+# Example of querying the index
+user_input = "a film with samurais and swords in Japan."
+query_emb = embed_plot(user_input, model, device)
+
+ids, dists = annoy_index.get_nns_by_vector(query_emb, n=5, include_distances=True)
+
 
 results = []
 
