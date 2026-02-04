@@ -18,18 +18,32 @@ from transformers import DistilBertTokenizerFast
 
 from nlp_model import TextClassifier
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--poster_classifier_path", type=str, default="weights/poster_classifier_resnet.pth", help="model path") 
+parser.add_argument("--text_classifier_path", type=str, default="weights/text_classifier.pth", help="text classifier path")
+parser.add_argument("--dknn_path", type=str, default="weights/dknn.pkl", help="dknn path")
+
+parser.add_argument("--annoy_path", type=str, default="embeddings/movie_plots.ann", help="annoy_path")
+parser.add_argument("--annoy_meta_path", type=str, default="embeddings/movie_plots_index.csv", help="annoy_meta_path")
+
+parser.add_argument("--labels_path", type=str, default="./labels.json", help="labels json path")
+
+args = parser.parse_args()
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+#classifier path
+POSTER_CLASSIFIER_PATH = args.poster_classifier_path
+
 #DKNN related paths
-DKNN_PATH = os.path.join(BASE_DIR, "dknn.pkl")
+DKNN_PATH = args.dknn_path
 
 #Plot classification related paths
-PLOT_MODEL_PATH = os.path.join(BASE_DIR, "weights/text_classifier.pth")
-PLOT_LABELS_PATH = os.path.join(BASE_DIR, "labels.json")
+PLOT_MODEL_PATH = args.text_classifier_path
 
 #ANNOY related paths
-ANNOY_PATH = os.path.join(BASE_DIR, "embeddings/movie_plots.ann")
-ANNOY_META_PATH = os.path.join(BASE_DIR, "embeddings/movie_plots_index.csv")
+ANNOY_PATH = args.annoy_path
+ANNOY_META_PATH = args.annoy_meta_path
 
 PLOT_MAX_LEN = 256
 PLOT_EMBED_DIM = 300
@@ -48,10 +62,7 @@ except FileNotFoundError:
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 app = Flask(__name__)
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--model_path", type=str, default="weights_resNet/poster_classifier_resnet.pth", help="model path")
-parser.add_argument("--labels_path", type=str, default="./labels.json", help="labels json path")
-args = parser.parse_args()
+
 
 # ---- Load labels (id -> genre) ----
 with open(args.labels_path, "r") as f:
@@ -59,7 +70,7 @@ with open(args.labels_path, "r") as f:
 
 # ---- Load model ----
 model = poster_classifier().to(device)
-state_dict = torch.load(args.model_path, map_location=device,weights_only=True)  # state_dict pur
+state_dict = torch.load(POSTER_CLASSIFIER_PATH, map_location=device,weights_only=True)  # state_dict pur
 model.load_state_dict(state_dict)
 model.eval()
 
@@ -73,15 +84,12 @@ transform = transforms.Compose([
 # ---- Load tokenizer ----
 plot_tokenizer = DistilBertTokenizerFast.from_pretrained("distilbert-base-uncased")
 
-# ---- Load plot labels ----
-with open(PLOT_LABELS_PATH, "r") as f:
-    plot_labels = json.load(f)  # list of genres in the correct order
 
 # ---- Load NLP model ----
 plot_model = TextClassifier(
     vocab_size=plot_tokenizer.vocab_size,
     embedding_dim=PLOT_EMBED_DIM,
-    num_classes=len(plot_labels)
+    num_classes=len(labels)
 ).to(device)
 
 plot_state = torch.load(PLOT_MODEL_PATH, map_location=device, weights_only=True)
@@ -126,7 +134,7 @@ def predict_genre_from_plot(plot: str):
         logits = plot_model(input_ids, lengths)        # (1, C)
         probs = F.softmax(logits, dim=1)[0]            # (C,)
         pred_id = int(torch.argmax(probs).item())
-        pred_label = plot_labels[pred_id]
+        pred_label = labels[pred_id]
         conf = float(probs[pred_id].item())
     return pred_id, pred_label, conf
 
@@ -257,7 +265,7 @@ def recommend_from_plot():
         recs.append({
             "annoy_id": int(annoy_id),
             "label_id": int(row["label"]),
-            "label": plot_labels[int(row["label"])],
+            "label": labels[int(row["label"])],
             "plot": str(row["plot"])[:400],     # éviter d’envoyer des pavés énormes
             "distance": float(dist)
         })
