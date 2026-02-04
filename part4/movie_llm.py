@@ -1,28 +1,17 @@
-"""
-movie_llm.py
-
-The MovieChatLLM class integrates an LLM with retrieved movie candidates obtained from a CLIP + Annoy retrieval pipeline.
-For each user message, the LLM receives a compact context composed of the
-top retrieved movies (genre and plot) and generates a response that recommends or discusses these movies.
-
-Key characteristics:
-- The LLM does NOT perform retrieval itself.
-- Retrieval is handled separately using multimodal CLIP embeddings and Annoy.
-- The LLM is strictly constrained to use only the retrieved movies as context
-  in order to avoid hallucinated recommendations.
-- A short chat history is optionally injected to support conversational
-  interactions.
-
-This design follows a retrieval-augmented generation (RAG) pattern, where
-retrieval and generation are cleanly separated:
-    User query → CLIP embedding → Annoy retrieval → Movie context → LLM response
-
-The module is intended to be used in interactive applications such as a
-Gradio chatbot for natural language movie discovery.
-"""
-
+import json
+import re
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+
+def _extract_json_array(text: str):
+    # Cherche le premier bloc JSON qui ressemble à {"reasons":[...]}
+    m = re.search(r'\{[\s\S]*\}', text)
+    if not m:
+        return None
+    try:
+        return json.loads(m.group(0))
+    except Exception:
+        return None
 
 
 def pick_device():
@@ -44,44 +33,57 @@ class MovieChatLLM:
         if device == "cuda":
             self.model = self.model.to("cuda")
 
+        # Set up text generation pipeline
         self.pipe = pipeline(
             "text-generation",
             model=self.model,
             tokenizer=self.tokenizer,
             return_full_text=False,
-            do_sample=True,
-            temperature=temperature,
-            max_new_tokens=max_new_tokens,
+            do_sample=False,
+            temperature=0.0,
+            max_new_tokens= 180,
+            repetition_penalty=1.1,
         )
 
-    def reply(self, user_msg: str, history: list[tuple[str, str]], movies: list[dict]) -> str:
-        # Keep history short to avoid huge prompts
-        history = history[-4:] if history else []
+    def reply(self, user_msg: str, movies: list[dict], k: int = 5) -> list[str]:
+        """
+        Returns ONLY the reasons (one short sentence per candidate), as a list of strings.
+        You display genre/dist yourself in the UI.
+        """
+        k = min(k, len(movies))
+        candidates = movies[:k]
 
-        # Build compact movie context
+        # Context ONLY: plots (and maybe genre to guide)
         ctx_lines = []
-        for i, m in enumerate(movies, start=1):
+        for i, m in enumerate(candidates, start=1):
             plot = (m.get("plot") or "").replace("\n", " ")[:220]
             cat = m.get("category") or "Unknown"
-            ctx_lines.append(f"{i}. Genre: {cat}. Plot: {plot}")
+            ctx_lines.append(f"{i}) Genre: {cat}. Plot: {plot}")
 
-        movies_ctx = "\n".join(ctx_lines) if ctx_lines else "No candidates."
-
-        # Build a simple chat prompt
-        chat_ctx = ""
-        for u, a in history:
-            chat_ctx += f"User: {u}\nAssistant: {a}\n"
+        movies_ctx = "\n".join(ctx_lines)
 
         prompt = (
-            "You are a friendly movie discovery assistant.\n"
-            "You must recommend movies based on the user's request.\n"
-            "Use ONLY the candidate movies provided below (do not invent titles).\n"
-            "If the user asks for something not covered, ask a clarifying question.\n\n"
-            f"Candidate movies:\n{movies_ctx}\n\n"
-            f"{chat_ctx}"
-            f"User: {user_msg}\n"
-            "Assistant:"
+            "You are given a user request and k candidate movies.\n"
+            "Write ONE short reason (max 18 words) for EACH candidate.\n"
+            "Return ONLY valid JSON, nothing else.\n"
+            "JSON schema: {\"reasons\": [\"...\", \"...\", ...]} with exactly k strings.\n\n"
+            f"User request: {user_msg}\n\n"
+            f"Candidates:\n{movies_ctx}\n"
         )
 
         out = self.pipe(prompt)
-        return out[0]["generated_text"].strip()
+        raw = out[0]["generated_text"].strip()
+
+        data = _extract_json_array(raw)
+        if data and isinstance(data.get("reasons"), list):
+            reasons = [str(r).strip() for r in data["reasons"]][:k]
+            # fallback if wrong length
+            if len(reasons) == k:
+                return reasons
+
+        # Fallback ultra simple si JSON raté : take first k non-empty lines
+        lines = [ln.strip("-• ").strip() for ln in raw.splitlines() if ln.strip()]
+        return (lines + [""] * k)[:k]
+
+
+

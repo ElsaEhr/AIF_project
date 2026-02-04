@@ -20,6 +20,7 @@ from transformers import DistilBertTokenizerFast
 
 from retriever import load_assets, discover_movies
 
+from movie_llm import MovieChatLLM 
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -146,6 +147,18 @@ try:
 except Exception as e:
     mm_annoy_index = None
     print(f"WARNING: Could not load multimodal assets: {e}")
+
+
+# ---- Load LLM for chat ----
+try:
+    # Choisis un modèle léger si CPU
+    movie_llm = MovieChatLLM(model_name="TinyLlama/TinyLlama-1.1B-Chat-v1.0", max_new_tokens=220)
+    print("Loaded MovieChatLLM for /chat_movies")
+except Exception as e:
+    movie_llm = None
+    print(f"WARNING: Could not load MovieChatLLM: {e}")
+
+
 
 # -----------------------
 # ROUTES
@@ -315,6 +328,37 @@ def discover_movies_route():
 
     return jsonify({"query": query, "k": k, "results": results})
 
+# --------- LLM chat ---------
+@app.route("/chat_movies", methods=["POST"])
+def chat_movies_route():
+    if mm_annoy_index is None:
+        return jsonify({"error": "Multimodal index not loaded"}), 500
+    if movie_llm is None:
+        return jsonify({"error": "LLM not loaded"}), 500
+
+    payload = request.get_json(silent=True) or {}
+    message = (payload.get("message") or "").strip()
+    if not message:
+        return jsonify({"error": "Missing JSON field 'message'"}), 400
+
+    k = int(payload.get("k", 5))
+    k = max(1, min(k, 20))
+
+    # history attendu: liste de paires [ ["user","assistant"], ... ]
+    history = payload.get("history") or []
+    history = [(h[0], h[1]) for h in history if isinstance(h, list) and len(h) == 2]
+
+    # 1) retrieval
+    results = discover_movies(message, k, mm_annoy_index, mm_metadata, mm_clip_model, mm_device)
+
+    # 2) génération LLM (on limite le contexte)
+    reasons = movie_llm.reply(user_msg=message, movies=results, k=k)
+
+   # On renvoie reasons + results
+    return jsonify({
+    "reasons": reasons,
+    "results": results
+    })
 
 
 # -----------------------

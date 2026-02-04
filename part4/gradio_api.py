@@ -14,6 +14,7 @@ API_VALIDATE_URL = "http://127.0.0.1:5075/validate_poster"
 API_PREDICT_PLOT = "http://127.0.0.1:5075/predict_plot"
 API_RECO_PLOT = "http://127.0.0.1:5075/recommend_from_plot"
 API_DISCOVER_MOVIES = "http://127.0.0.1:5075/discover_movies"
+API_CHAT_MOVIES = "http://127.0.0.1:5075/chat_movies"
 
 #EN DOCKER
 #API_URL = "http://api:5075/predict"
@@ -21,7 +22,7 @@ API_DISCOVER_MOVIES = "http://127.0.0.1:5075/discover_movies"
 #API_PREDICT_PLOT = "http://api:5075/predict_plot"
 #API_RECO_PLOT = "http://api:5075/recommend_from_plot"
 #API_DISCOVER_MOVIES = "http://api:5075/discover_movies"
-
+#API_CHAT_MOVIES = "http://api:5075/chat_movies"
 
 
 
@@ -107,9 +108,55 @@ def discover_movies_nl(query: str, k: int):
 
     except Exception as e:
         return f"ERROR: {e}", []
+    
+def chat_movies(user_msg, history, k):
+    try:
+        history = history or []
 
+        # Convert Gradio history (list of tuples) -> list of lists for JSON
+        history_payload = [[u, a] for (u, a) in history]
 
+        r = requests.post(
+            API_CHAT_MOVIES,
+            json={"message": user_msg, "k": int(k), "history": history_payload},
+            timeout=60
+        )
+        r.raise_for_status()
+        data = r.json()
+        results = data.get("results", [])
+        reasons = data.get("reasons", [])
 
+        # Construire un affichage propre (genre+dist+reason)
+        lines = []
+        for i, m in enumerate(results[:int(k)]):
+            cat = m.get("category", "Unknown")
+            dist = m.get("distance", None)
+            dist_str = f"{dist:.3f}" if isinstance(dist, (int, float)) else "N/A"
+            reason = reasons[i] if i < len(reasons) else ""
+            lines.append(f"{i+1}. {cat} | dist={dist_str} — {reason}")
+    
+        answer = "\n".join(lines) if lines else "No results."
+
+        # Update chat
+        history = (history or []) + [(user_msg, answer)]
+
+        # Build gallery images (local load like before)
+        images = []
+        for m in results:
+            poster_rel = m.get("poster_path")
+            if poster_rel:
+                poster_path = POSTERS_ROOT / poster_rel
+                if poster_path.exists():
+                    images.append(Image.open(poster_path).convert("RGB"))
+
+        return history, images
+
+    except Exception as e:
+        # show error in chat
+        history = (history or []) + [(user_msg, f"ERROR: {e}")]
+        return history, []
+
+# Gradio app
 if __name__ == "__main__":
     with gr.Blocks() as demo:
         gr.Markdown("# AIF project: Movie Platform")
@@ -159,27 +206,66 @@ if __name__ == "__main__":
                 btn_plot_reco.click(recommend_from_plot, inputs=[plot_input, k_input], outputs=plot_reco_output)
 
             # -----------------------------------------
-            # TAB 3 — Natural Language Movie Discovery
+            # TAB 3 — Retrieval (CLIP + Annoy)
             # -----------------------------------------
-            with gr.Tab("Natural Language Discovery"):
-                gr.Markdown("## Natural Language Movie Discovery")
-                gr.Markdown("Describe what you want to watch — we retrieve similar movies using CLIP + Annoy.")
+            with gr.Tab("Retrieval (CLIP + Annoy)"):
+                gr.Markdown("## Movie Retrieval from Natural Language Query")
+                gr.Markdown("Type a natural language request. We retrieve the top-k closest movies using CLIP embeddings + Annoy.")
 
-                nl_query = gr.Textbox(
-                    label="Your request",
+                query = gr.Textbox(
+                    label="Describe what you want to watch",
                     placeholder="e.g. a film with samurais and swords in Japan",
                     lines=3
                 )
 
                 with gr.Row():
-                    nl_k = gr.Slider(1, 20, value=5, step=1, label="Top-k")
-                    btn_nl = gr.Button("Find movies")
+                    k = gr.Slider(1, 20, value=5, step=1, label="Top-k")
+                    btn = gr.Button("Retrieve movies", variant="primary")
+                    clear = gr.Button("Clear")
 
                 with gr.Row():
-                    nl_out = gr.Textbox(label="Results", lines=12)
-                    nl_gallery = gr.Gallery(label="Recommended posters", columns=5, height=250)
+                    with gr.Column(scale=2):
+                        results_txt = gr.Textbox(label="Retrieved results", lines=14)
+                    with gr.Column(scale=1):
+                        posters = gr.Gallery(label="Posters", columns=2, height=420)
 
-                btn_nl.click(discover_movies_nl, inputs=[nl_query, nl_k], outputs=[nl_out, nl_gallery])
+                btn.click(discover_movies_nl, inputs=[query, k], outputs=[results_txt, posters])
+                query.submit(discover_movies_nl, inputs=[query, k], outputs=[results_txt, posters])
+
+                clear.click(lambda: ("", []), outputs=[results_txt, posters])
+                clear.click(lambda: "", outputs=query)
+
+
+            # -----------------------------------------
+            # TAB 4 — Movie Discovery Chatbot (RAG)
+            # -----------------------------------------
+            with gr.Tab("Movie Discovery Chatbot"):
+                gr.Markdown("## Natural Language Movie Discovery (Chatbot)")
+                gr.Markdown("Chat with the assistant — it retrieves movies (CLIP + Annoy) and generates answers with an LLM.")
+
+                with gr.Row():
+                    # LEFT: chat
+                    with gr.Column(scale=2):
+                        chat = gr.Chatbot(label="Chat", height=420)
+                        user_msg = gr.Textbox(
+                            label="Your message",
+                            placeholder="e.g. I want a samurai movie set in Japan, with intense sword fights",
+                            lines=2
+                        )
+
+                    with gr.Row():
+                        k_chat = gr.Slider(1, 20, value=5, step=1, label="Top-k retrieved")
+                        send = gr.Button("Send", variant="primary")
+                        clear = gr.Button("Clear")
+
+                    # RIGHT: posters
+                    with gr.Column(scale=1):
+                        posters = gr.Gallery(label="Retrieved posters", columns=2, height=420)
+
+                send.click(chat_movies, inputs=[user_msg, chat, k_chat], outputs=[chat, posters])
+                user_msg.submit(chat_movies, inputs=[user_msg, chat, k_chat], outputs=[chat, posters])
+
+            clear.click(lambda: ([], []), outputs=[chat, posters])
 
     demo.launch(server_name="0.0.0.0", server_port=7860)
 
