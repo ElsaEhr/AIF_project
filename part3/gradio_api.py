@@ -5,17 +5,17 @@ import io
 
 
 #EN LOCAL
-API_URL = "http://127.0.0.1:5075/predict"
-API_VALIDATE_URL = "http://127.0.0.1:5075/validate_poster"
-API_PREDICT_PLOT = "http://127.0.0.1:5075/predict_plot"
-API_RECO_PLOT = "http://127.0.0.1:5075/recommend_from_plot"
+#API_URL = "http://127.0.0.1:5075/predict"
+#API_VALIDATE_URL = "http://127.0.0.1:5075/validate_poster"
+#API_PREDICT_PLOT = "http://127.0.0.1:5075/predict_plot"
+#API_RECO_PLOT = "http://127.0.0.1:5075/recommend_from_plot"
 
 
 #EN DOCKER
-#API_URL = "http://api:5075/predict"
-#API_VALIDATE_URL = "http://api:5075/validate_poster"
-#API_PREDICT_PLOT = "http://api:5075/predict_plot"
-#API_RECO_PLOT = "http://api:5075/recommend_from_plot"
+API_URL = "http://api:5075/predict"
+API_VALIDATE_URL = "http://api:5075/validate_poster"
+API_PREDICT_PLOT = "http://api:5075/predict_plot"
+API_RECO_PLOT = "http://api:5075/recommend_from_plot"
 
 
 
