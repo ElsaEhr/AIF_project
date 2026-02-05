@@ -19,16 +19,12 @@ def pick_device():
     return "cpu"
 
 
-def load_assets():
-    """
-    Loads CLIP + Annoy index + metadata (offline-built artifacts).
-    Returns: annoy_index, metadata(dict), clip_model, preprocess, device
-    """
+def load_assets(annoy_path=None, metadata_path=None):
     base_dir = Path(__file__).resolve().parent
     assets_dir = base_dir / "assets"
 
-    index_path = assets_dir / "movies.ann"
-    metadata_path = assets_dir / "metadata.json"
+    index_path = Path(annoy_path) if annoy_path else (assets_dir / "movies.ann")
+    metadata_path = Path(metadata_path) if metadata_path else (assets_dir / "metadata.json")
 
     if not index_path.exists():
         raise FileNotFoundError(f"Missing Annoy index: {index_path}")
@@ -42,9 +38,10 @@ def load_assets():
     annoy_index.load(str(index_path))
 
     with open(metadata_path, "r", encoding="utf-8") as f:
-        metadata = json.load(f)  # keys are strings
+        metadata = json.load(f)
 
     return annoy_index, metadata, model, preprocess, device
+
 
 
 def discover_movies(query: str, k: int, annoy_index, metadata, model, device):

@@ -41,7 +41,7 @@ class MovieChatLLM:
             return_full_text=False,
             do_sample=False,
             temperature=0.0,
-            max_new_tokens= 180,
+            max_new_tokens= 120,  # limit response length
             repetition_penalty=1.1,
         )
 

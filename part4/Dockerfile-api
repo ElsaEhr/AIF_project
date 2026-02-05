@@ -14,6 +14,10 @@ RUN mkdir -p embeddings && \
     gdown --id 16OEnpILRMhIysFlwDNAUMA5-SQ1GpVbp -O embeddings/movie_plots.ann && \
     gdown --id 1xSPjkratx8XX8NlRiP30waXrZHlYQBf_ -O embeddings/movie_plots_index.csv
 
+RUN mkdir -p assets && \
+    gdown --id 1PeKtyaYANp-D2-i8DX8AZ2h65qIEhIqU -O assets/metadata.json && \
+    gdown --id 18qk0Fx4cgWYdVz2o1qXyKja6JUhcJByc -O assets/movies.ann
+
 # (optionnel mais souvent utile)
 RUN pip install --no-cache-dir --upgrade pip
 
@@ -27,9 +31,18 @@ RUN apt-get update && apt-get install -y \
 
 RUN pip install --no-cache-dir -r requirements-api.txt
 
+#ajout pour pouvoir utiliser clip
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+    RUN pip install --no-cache-dir git+https://github.com/openai/CLIP.git
+
+
 # 2) copier le reste
 COPY . /app
 
 EXPOSE 5075
 
-CMD ["python", "genre_pred_api.py", "--poster_classifier_path", "weights/poster_classifier_resnet.pth", "--text_classifier_path", "weights/text_classifier.pth", "--dknn_path", "weights/dknn.pkl", "--annoy_path", "embeddings/movie_plots.ann", "--annoy_meta_path", "embeddings/movie_plots_index.csv", "--labels_path", "labels.json"]
+CMD ["python", "genre_pred_api.py", "--poster_classifier_path", "weights/poster_classifier_resnet.pth", "--text_classifier_path", "weights/text_classifier.pth", "--dknn_path", "weights/dknn.pkl", "--annoy_path", "embeddings/movie_plots.ann", "--annoy_meta_path", "embeddings/movie_plots_index.csv", "--labels_path", "labels.json", "--mm_annoy_path", "assets/movies.ann", "--mm_metadata_path", "assets/metadata.json"]

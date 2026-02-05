@@ -34,6 +34,10 @@ parser.add_argument("--annoy_meta_path", type=str, default="embeddings/movie_plo
 
 parser.add_argument("--labels_path", type=str, default="./labels.json", help="labels json path")
 
+parser.add_argument("--mm_annoy_path", type=str, default="assets/movies.ann")
+parser.add_argument("--mm_metadata_path", type=str, default="assets/metadata.json")
+
+
 args = parser.parse_args()
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -111,8 +115,11 @@ annoy_meta = pd.read_csv(ANNOY_META_PATH)  # columns: annoy_id, label, plot
 
 # ---- Load CLIP+Annoy assets (Part 4 - multimodal retrieval) ----
 try:
-    mm_annoy_index, mm_metadata, mm_clip_model, mm_preprocess, mm_device = load_assets()
+    mm_annoy_index, mm_metadata, mm_clip_model, mm_preprocess, mm_device = load_assets(
+        annoy_path=args.mm_annoy_path,
+        metadata_path=args.mm_metadata_path)
     print("Loaded multimodal CLIP+Annoy assets for /discover_movies")
+
 except Exception as e:
     mm_annoy_index = None
     mm_metadata = None
@@ -120,6 +127,7 @@ except Exception as e:
     mm_preprocess = None
     mm_device = None
     print(f"WARNING: Could not load multimodal assets: {e}")
+
 
 
 # Function to convert plot to embedding
@@ -348,4 +356,4 @@ def chat_movies_route():
     })
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5075, debug=True)
+    app.run(host="0.0.0.0", port=5075, debug=False)

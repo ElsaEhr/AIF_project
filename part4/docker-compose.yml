@@ -1,20 +1,27 @@
-#version: '3.8' # specify docker-compose version
-services: # services to run
-  api: # name of the first service
+services:
+  api:
     build:
-      context: . # specify the directory of the Dockerfile
-      dockerfile: Dockerfile-api # specify the Dockerfile name
+      context: .
+      dockerfile: Dockerfile-api
     ports:
-      - "5075:5075" # specify port mapping
+      - "5075:5075"
     volumes:
-      - .:/app
-      - /app/weights
+      - ./content:/app/content
+      - api_cache:/root/.cache
 
   gradio:
     build:
-      context: . # specify the directory of the Dockerfile
-      dockerfile: Dockerfile-gradio # specify the Dockerfile name
+      context: .
+      dockerfile: Dockerfile-gradio
     ports:
-      - "7860:7860" # specify port mapping
+      - "7860:7860"
     depends_on:
-      - api # specify service dependencies
+      - api
+    volumes:
+      - ./content:/app/content:ro
+    environment:
+      - API_BASE_URL=http://api:5075
+      - POSTERS_ROOT=/app/content
+
+volumes:
+  api_cache:

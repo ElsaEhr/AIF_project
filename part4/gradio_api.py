@@ -2,27 +2,24 @@ import gradio as gr
 from PIL import Image
 import requests
 import io
+import os
 from pathlib import Path
-from PIL import Image
+
 
 BASE_DIR = Path(__file__).resolve().parent
 
-#EN LOCAL
-POSTERS_ROOT = BASE_DIR.parent / "content"  
-API_URL = "http://127.0.0.1:5075/predict"
-API_VALIDATE_URL = "http://127.0.0.1:5075/validate_poster"
-API_PREDICT_PLOT = "http://127.0.0.1:5075/predict_plot"
-API_RECO_PLOT = "http://127.0.0.1:5075/recommend_from_plot"
-API_DISCOVER_MOVIES = "http://127.0.0.1:5075/discover_movies"
-API_CHAT_MOVIES = "http://127.0.0.1:5075/chat_movies"
+# Where posters are stored (default: ./content next to gradio_api.py)
+POSTERS_ROOT = Path(os.getenv("POSTERS_ROOT", str(BASE_DIR / "content")))
 
-#EN DOCKER
-#API_URL = "http://api:5075/predict"
-#API_VALIDATE_URL = "http://api:5075/validate_poster"
-#API_PREDICT_PLOT = "http://api:5075/predict_plot"
-#API_RECO_PLOT = "http://api:5075/recommend_from_plot"
-#API_DISCOVER_MOVIES = "http://api:5075/discover_movies"
-#API_CHAT_MOVIES = "http://api:5075/chat_movies"
+# API base url (default: local)
+API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:5075")
+
+API_URL = f"{API_BASE_URL}/predict"
+API_VALIDATE_URL = f"{API_BASE_URL}/validate_poster"
+API_PREDICT_PLOT = f"{API_BASE_URL}/predict_plot"
+API_RECO_PLOT = f"{API_BASE_URL}/recommend_from_plot"
+API_DISCOVER_MOVIES = f"{API_BASE_URL}/discover_movies"
+API_CHAT_MOVIES = f"{API_BASE_URL}/chat_movies"
 
 
 
@@ -119,7 +116,7 @@ def chat_movies(user_msg, history, k):
         r = requests.post(
             API_CHAT_MOVIES,
             json={"message": user_msg, "k": int(k), "history": history_payload},
-            timeout=60
+            timeout=600
         )
         r.raise_for_status()
         data = r.json()
