@@ -16,7 +16,13 @@ import pandas as pd
 from annoy import AnnoyIndex
 from transformers import DistilBertTokenizerFast
 
+# Partie 3
 from nlp_model import TextClassifier
+
+# Partie 4
+from retriever import load_assets, discover_movies
+from movie_llm import MovieChatLLM
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--poster_classifier_path", type=str, default="weights/poster_classifier_resnet.pth", help="model path") 
@@ -101,6 +107,20 @@ annoy_index = AnnoyIndex(PLOT_EMBED_DIM, "angular")
 annoy_index.load(ANNOY_PATH)
 
 annoy_meta = pd.read_csv(ANNOY_META_PATH)  # columns: annoy_id, label, plot
+
+
+# ---- Load CLIP+Annoy assets (Part 4 - multimodal retrieval) ----
+try:
+    mm_annoy_index, mm_metadata, mm_clip_model, mm_preprocess, mm_device = load_assets()
+    print("Loaded multimodal CLIP+Annoy assets for /discover_movies")
+except Exception as e:
+    mm_annoy_index = None
+    mm_metadata = None
+    mm_clip_model = None
+    mm_preprocess = None
+    mm_device = None
+    print(f"WARNING: Could not load multimodal assets: {e}")
+
 
 # Function to convert plot to embedding
 def plot_to_embedding(plot: str):
@@ -270,6 +290,62 @@ def recommend_from_plot():
             "distance": float(dist)
         })
     return jsonify({"recommendations": recs})
+
+# ---------- Movie discovery (CLIP + Annoy) ----------
+@app.route("/discover_movies", methods=["POST"])
+def discover_movies_route():
+    if mm_annoy_index is None:
+        return jsonify({"error": "Multimodal index not loaded"}), 500
+
+    payload = request.get_json(silent=True) or {}
+    query = (payload.get("query") or "").strip()
+    if not query:
+        return jsonify({"error": "Missing JSON field 'query'"}), 400
+
+    k = int(payload.get("k", 5))
+    k = max(1, min(k, 20))
+
+    results = discover_movies(query, k, mm_annoy_index, mm_metadata, mm_clip_model, mm_device)
+    return jsonify({"query": query, "k": k, "results": results})
+
+# --------- LLM chat ---------
+try:
+    movie_llm = MovieChatLLM(model_name="TinyLlama/TinyLlama-1.1B-Chat-v1.0", max_new_tokens=180)
+    print("Loaded MovieChatLLM for /chat_movies")
+except Exception as e:
+    movie_llm = None
+    print(f"WARNING: Could not load MovieChatLLM: {e}")
+
+@app.route("/chat_movies", methods=["POST"])
+def chat_movies_route():
+    if mm_annoy_index is None:
+        return jsonify({"error": "Multimodal index not loaded"}), 500
+    if movie_llm is None:
+        return jsonify({"error": "LLM not loaded"}), 500
+
+    payload = request.get_json(silent=True) or {}
+    message = (payload.get("message") or "").strip()
+    if not message:
+        return jsonify({"error": "Missing JSON field 'message'"}), 400
+
+    k = int(payload.get("k", 5))
+    k = max(1, min(k, 20))
+
+    # history attendu: liste de paires [ ["user","assistant"], ... ]
+    history = payload.get("history") or []
+    history = [(h[0], h[1]) for h in history if isinstance(h, list) and len(h) == 2]
+
+    # 1) retrieval
+    results = discover_movies(message, k, mm_annoy_index, mm_metadata, mm_clip_model, mm_device)
+
+    # 2) génération LLM (on limite le contexte)
+    reasons = movie_llm.reply(user_msg=message, movies=results, k=k)
+
+   # On renvoie reasons + results
+    return jsonify({
+    "reasons": reasons,
+    "results": results
+    })
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5075, debug=True)
