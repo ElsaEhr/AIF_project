@@ -1,0 +1,27 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile-api
+    ports:
+      - "5075:5075"
+    volumes:
+      - ./content:/app/content
+      - api_cache:/root/.cache
+
+  gradio:
+    build:
+      context: .
+      dockerfile: Dockerfile-gradio
+    ports:
+      - "7860:7860"
+    depends_on:
+      - api
+    volumes:
+      - ./content:/app/content:ro
+    environment:
+      - API_BASE_URL=http://api:5075
+      - POSTERS_ROOT=/app/content
+
+volumes:
+  api_cache:

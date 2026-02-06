@@ -19,10 +19,8 @@ venv/
 
 # ===== Embeddings / Index =====
 embeddings/
-assests/
 *.ann
 *.faiss
-*.json
 
 # ===== Content =====
 content/
@@ -36,3 +34,5 @@ results/
 
 # ===== Docker local =====
 .env
+
+
