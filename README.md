@@ -49,10 +49,11 @@ Please follow this link to access the poster database and download the folder ``
 
 Your structure should look like this: 
 
+```
 AIF_project/
 ├── content/
 ├── ...
-
+```
 
 2. Build the Docker image:
 
