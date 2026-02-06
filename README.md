@@ -24,18 +24,15 @@ The application is developed across four main parts, each introducing a critical
   
 
 ## Project Structure
-
-A compléter  
 ```
-/project_AIF
+/AIF_project
 │
+├─ /main
 ├─ /part1                
 ├─ /part2                
 ├─ /part3                
-├─ /part4               
-├─ Dockerfile
-├─ requirements.txt
-└─ README.md
+└─ /part4               
+ 
 ```
 
 ## Installation
@@ -43,48 +40,62 @@ A compléter
 1. Clone the repository:
 
 ```bash
-git clone <repo_url>
-cd <repo_name>
+git clone https://github.com/ElsaEhr/AIF_project.git 
+cd AIF_project
 ```
+2. Download the poster database:
 
-A modifier
+Please follow this link to access the poster database and download the folder ```\content``` into the ```\AIF_project``` folder in your local repo: https://drive.google.com/drive/folders/17WB35oYygrQDlcK9XLaKdh-akmBB1lfD?usp=share_link 
+
+Your structure should look like this: 
+
+AIF_project/
+├── content/
+├── ...
+
 
 2. Build the Docker image:
 
+In a terminal: 
+
 ```bash
-docker build -t movie-ai-platform .
+docker compose build 
 ```
 
 3. Run the container locally:
 
 ```bash
-docker run -p 7860:7860 movie-ai-platform
+docker compose up
 ```
 
 4. Access the web interface at `http://localhost:7860`.
+
+
+5. Enjoy the application as you like! (See **Usage** for more details)
+
+
+6. When finish using the application:
+
+```bash
+docker compose down
+```
 
 ## Usage
 
 The following functionalities are accessible via the **Gradio web interface** powered by the **Flask REST API**:
 
-| Functionality | Input | Output | Part Introduced |
-| :--- | :--- | :--- | :--- |
-| **Poster Genre Prediction** | Uploaded Poster Image | Predicted Genre | Part 1 |
-| **Poster Validation** | Uploaded Image | Validation Status (Valid/Invalid) | Part 2 |
-| **Plot Genre Prediction** | Movie Plot Text | Predicted Genre | Part 3 |
-| **Plot Recommendations** | Movie Plot Text | List of Similar Movies | Part 3 |
-| **Conversational Search** | Natural Language Query (e.g., "Find funny movies from the 90s") | Relevant Movie Suggestions | Part 4 |
+| Functionality | Input | Output | Part Introduced | Web Tab |
+| :--- | :--- | :--- | :--- |:--- |
+| **Poster Genre Prediction** | Uploaded Poster Image | Predicted Genre | Part 1 | Poster Analyzer |
+| **Poster Validation** | Uploaded Poster Image | Validation (Is the image a poster or not ?) | Part 2 | Poster Analyzer |
+| **Plot Genre Prediction** | Movie Plot Text | Predicted Genre | Part 3.1 | Plot Tools |
+| **Recommendations from plot (NLP)** | Movie Plot Text | List of Similar Movies | Part 3.2 | Plot Tools |
+| **Recommendations from plot (Retrieval)** | Movie Plot Text | List of Similar Movies | Part 4.1 | Retrival CLIP + Annoy |
+| **Conversational Search** | Natural Language Query (e.g., "I want a movie about pirates") | Relevant Movie Suggestions | Part 4.2 | Movie Discovery Chatbot |
 
 ## Deployment
 Every part of this project adheres to a continuous deployment cycle, involving the implementation of new features via a Flask REST API, their integration into an evolving Gradio web interface, and the final containerization using Docker before being tested and deployed to a cloud provider.
 
-## Dataset & Model
-
-* **Movie Posters Dataset:** https://drive.google.com/file/d/1-1OSGlN2EOqyZuehBgpgI8FNOtK-caYf/view
-%* **Plot Dataset:** [link]
-* **Pretrained models:** Download at runtime via Docker configuration.
-
 ## Cloud
-
 In order to have access to the application online, please go to this link:  http://34.121.20.146:7860  
-
+(specified time to be determined)
