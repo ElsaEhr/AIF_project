@@ -17,7 +17,7 @@ The application is developed across four main parts, each introducing a critical
 
 * **Part 1 — Genre Prediction from Posters (CNN)**: Automatically predicts a movie's single genre using its poster image via a Convolutional Neural Network (CNN).
 * **Part 2 — Movie Poster Validation**: Extends the API to detect and reject invalid image uploads, ensuring catalog quality.
-* **Part 3 — Genre & Recommendation from Plots (NLP)**: Uses NLP techniques on the movie plot to predict genres and generate similar movie recommendations (via **Annoy Index**), primarily for cases where a poster is unavailable or invalid.
+* **Part 3 — Genre & Recommendation from Plots (NLP)**: Uses NLP techniques on the movie plot to predict genres and generate similar movie recommendations (via **Annoy Index**).
 * **Part 4 — Natural Language Movie Discovery**: Implements a conversational interface allowing users to find movies they might like through natural language queries.
 
   
