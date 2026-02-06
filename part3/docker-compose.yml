@@ -9,6 +9,7 @@ services: # services to run
     volumes:
       - .:/app
       - /app/weights
+      - ./labels.json:/app/labels.json 
 
   gradio:
     build:
