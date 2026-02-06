@@ -7,7 +7,7 @@ services: # services to run
     ports:
       - "5075:5075" # specify port mapping
     volumes:
-      - .:/app
+      #- .:/app
       - /app/weights
       - ./labels.json:/app/labels.json 
 
