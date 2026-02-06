@@ -84,4 +84,7 @@ Every part of this project adheres to a continuous deployment cycle, involving t
 %* **Plot Dataset:** [link]
 * **Pretrained models:** Download at runtime via Docker configuration.
 
+## Cloud
+
+In order to have access to the application online, please go to this link:  http://34.121.20.146:7860  
 
