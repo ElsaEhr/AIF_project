@@ -19,7 +19,7 @@ RUN mkdir -p assets && \
     gdown --id 18qk0Fx4cgWYdVz2o1qXyKja6JUhcJByc -O assets/movies.ann
 
 # (optionnel mais souvent utile)
-RUN pip install --no-cache-dir --upgrade pip
+RUN python -m pip install --no-cache-dir --upgrade pip setuptools wheel
 
 # 1) copier d'abord les requirements pour profiter du cache
 COPY requirements-api.txt /app/requirements-api.txt
@@ -33,11 +33,19 @@ RUN pip install --no-cache-dir -r requirements-api.txt
 
 #ajout pour pouvoir utiliser clip
 RUN apt-get update && apt-get install -y \
-    build-essential \
     git \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-    RUN pip install --no-cache-dir git+https://github.com/openai/CLIP.git
+RUN python -m pip install --no-cache-dir \
+    "setuptools<70" \
+    wheel
+
+# Install CLIP without pip build isolation
+RUN git clone https://github.com/openai/CLIP.git /tmp/CLIP && \
+    cd /tmp/CLIP && \
+    python setup.py install && \
+    rm -rf /tmp/CLIP
 
 
 # 2) copier le reste
