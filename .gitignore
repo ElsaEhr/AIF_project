@@ -24,7 +24,6 @@ embeddings/
 assests/
 *.ann
 *.faiss
-*.json
 
 # ===== Content =====
 content/
